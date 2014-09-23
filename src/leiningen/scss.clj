@@ -47,53 +47,103 @@
   [color & text]
   (str (ansi color) (string/join " " text) (ansi :reset)) )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Path helpers
+
 (defn abs
   [filename]
   (some-> filename io/file .getAbsoluteFile .getPath))
 
 (defn is-scss-partial?
   [file]
-  (re-find #"^_.+\.scss$" (.getName file)))
+  (->> file io/file .getName (re-find #"^_.+\.scss$")))
 
 (defn is-scss?
   [file]
-  (re-find #"^.+\.scss$" (.getName file)))
+  (->> file io/file .getName (re-find #"^.+\.scss$")))
 
 (defn ignore?
   [file]
   (re-find #"\.sass-cache" (.getPath file)))
 
-(defn contains-partial?
-  [partial-name file]
-  (when-not
-      (re-find (re-pattern partial-name) (.getName file))
-      (some #(re-find (re-pattern (str "@import\\s+['\"].*\\b" partial-name "['\"];")) %)
-            (line-seq (io/reader file)))))
-
 (defn files-in-source-dir
   [project args]
   (filter #(.isFile %) (file-seq (io/file (source-dir project args)))))
 
-(defn files-with-partial
-  [partial-name project args]
-  (lein/debug (color :blue "Searching for files with partial" partial-name))
-  (let [files   (print-time (files-in-source-dir project args))
-        result  (->> files
-                     (filter is-scss?)
-                     (remove ignore?)
-                     (filter  (partial contains-partial? partial-name)))]
-    (lein/debug (color :blue "Found:" (string/join " | " result)))
-    result))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Partial helpers
 
 (defn stylesheets-in-source
+  "Get all stylesheets in source dir, not including partials"
   [project args]
   (let [files  (print-time (files-in-source-dir project args))
         result (->> files
                     (filter is-scss?)
+                    (remove ignore?)
                     (remove is-scss-partial?))]
     (lein/debug (color :blue "Stylesheets found in" (source-dir project args) ":"
                        (string/join " | " result)))
     result))
+
+(defn scss-in-source
+  "Get all .scss file in source dir, including partials"
+  [project args]
+  (let [files  (print-time (files-in-source-dir project args))
+        result (->> files
+                    (filter is-scss?)
+                    (remove ignore?))]
+    (lein/debug (color :blue ".scss files found in" (source-dir project args) ":"
+                       (string/join " | " result)))
+    result))
+
+(defn get-partial-file-from-str
+  "Takes a partial string and return the actual file."
+  [s project args]
+  (let [m (for [f (remove ignore? (files-in-source-dir project args))]
+            [f (-> f .getPath
+                   (string/replace #"/_" "/")
+                   (string/replace #".scss$" "")
+                   (string/replace (re-pattern (str (source-dir project args) "/")) ""))])]
+    (some (fn [f] (when (re-find (re-pattern s) (second f)) (first f))) m)))
+
+(defn deps-in-scss*
+  "Get all direct dependencies for an .scss file"
+  [file project args]
+  (remove nil? (some->> file
+                   io/reader
+                   line-seq
+                   (filter #(re-find #"@import\s+['\"].*['\"]" %))
+                   (map #(re-find #"@import\s+['\"](.*)['\"]" %))
+                   (map last)
+                   (map #(get-partial-file-from-str % project args)))))
+(def deps-in-scss (memoize deps-in-scss*))
+
+
+
+(defn all-deps-for-scss*
+  "Get all dependencies for an .scss file, dependencies of partials too."
+  [file project args]
+  (let [children (atom [])
+        result   (distinct
+                  (tree-seq (fn [child]
+                              (let [get? (not (some #{child} @children))
+                                    num  (count (deps-in-scss child project args))]
+                                (swap! children conj child)
+                                (and (< 0 num) get?)))
+                            #(deps-in-scss % project args) file))]
+    [(abs (first result)) (map abs (rest result))]))
+(def all-deps-for-scss (memoize all-deps-for-scss*))
+
+
+(defn source-tree*
+  [project args]
+  (map #(all-deps-for-scss %  project args) (scss-in-source project args)))
+(def source-tree (memoize source-tree*))
+
+(defn scss-with-partial*
+  [file project args]
+  (print-time (map first (filter #(some #{(abs file)} (second %)) (source-tree project args)))))
+(def scss-with-partial (memoize scss-with-partial*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main
@@ -124,7 +174,7 @@
   (if (is-scss-partial? file)
     (doall
      (map #(handle-conversion % project args)
-          (print-time (files-with-partial (last (re-find #"_([^.]+)" (.getName file))) project args))))
+          (print-time (scss-with-partial file project args))))
     (convert file project args)))
 
 (defn handle-change
@@ -135,7 +185,7 @@
     (when-let [file (and (is-scss? file) file)]
       (lein/info (color :bright-yellow "Detected file change:" (.getName file)))
       (handle-conversion file project args))
-    (catch Exception e (lein/warn e))))
+    (catch Exception e (lein/warn (with-out-str (clojure.repl/pst e 20))))))
 
 (defn watchd
   [project args dir]
@@ -150,7 +200,7 @@
     (if (.isDirectory (io/as-file dir))
       (do
         (when-not (some #{"auto"} args)
-          (print-time (doall (map #(convert % project args)
+          (print-time (doall (pmap #(convert % project args)
                                   (print-time (stylesheets-in-source project args))))))
         (when-not (some #{"once"} args)
             (let [watcher (watchd project args dir)]
@@ -158,7 +208,7 @@
                 (loop [state* (reset! state "started")]
                   (Thread/sleep 5000)
                   (recur (reset! state "running")))
-                (catch Exception e (lein/warn e))
+                (catch Exception e (lein/warn (with-out-str (clojure.repl/pst e 20))))
                 (finally (close-watcher watcher))))))
       (lein/warn dir "is not a directory"))
     (lein/warn "Please provide a directory to watch")))
