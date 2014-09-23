@@ -1,26 +1,19 @@
 # lein-scss
 
-A Leiningen plugin to do many wonderful things.
+A Leiningen plugin to compile scss to css.
+
+[![Clojars Project](http://clojars.org/lein-scss/latest-version.svg)](http://clojars.org/lein-scss)
 
 ## Usage
 
-FIXME: Use this for user-level plugins:
+Put `[lein-scss "0.1.0"]` into the `:plugins` vector of your project.clj.
 
-Put `[lein-scss "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your
-`:user` profile, or if you are on Leiningen 1.x do `lein plugin install
-lein-scss 0.1.0-SNAPSHOT`.
-
-FIXME: Use this for project-level plugins:
-
-Put `[lein-scss "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your project.clj.
-
-FIXME: and add an example usage that actually makes sense:
-
-    $ lein scss
+Run with `lein scss` to to compile all your stylesheets, or optionally use
+`lein scss once` or `lein scss auto` to run once and exit, or watch the source for changes.
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
