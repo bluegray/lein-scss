@@ -11,6 +11,15 @@ Put `[lein-scss "0.1.0"]` into the `:plugins` vector of your project.clj.
 Run with `lein scss` to to compile all your stylesheets, or optionally use
 `lein scss once` or `lein scss auto` to run once and exit, or watch the source for changes.
 
+## Setup
+
+Add a section like this:
+
+    :scss {:source-dir "scss/"
+           :dest-dir   "public/css/"
+           :executable "sassc"
+           :args       ["-m" "-I" "scss" "-t" "nested"]}
+
 ## License
 
 Copyright © 2014
