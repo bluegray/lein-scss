@@ -25,11 +25,11 @@
 
 (defn source-dir
   [project args]
-  (or (-> project :scss :source-dir) (first args)))
+  (or (-> project :scss :source-dir) (first args) "scss/"))
 
 (defn dest-dir
   [project args]
-  (or (-> project :scss :dest-dir) (second args)))
+  (or (-> project :scss :dest-dir) (second args) "css/"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helpers
