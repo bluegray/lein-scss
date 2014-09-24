@@ -1,4 +1,5 @@
 (ns leiningen.scss
+  "Compile a scss project to css using any sass convertion tool."
   (:require [juxt.dirwatch :refer [watch-dir close-watcher]]
             [leiningen.core.eval :as eval]
             [leiningen.core.main :as lein]
@@ -85,18 +86,7 @@
                        (string/join " | " result)))
     result))
 
-(defn scss-in-source
-  "Get all .scss file in source dir, including partials"
-  [project args]
-  (let [files  (print-time (files-in-source-dir project args))
-        result (->> files
-                    (filter is-scss?)
-                    (remove ignore?))]
-    (lein/debug (color :blue ".scss files found in" (source-dir project args) ":"
-                       (string/join " | " result)))
-    result))
-
-(defn get-partial-file-from-str
+(defn get-partial-file-from-str*
   "Takes a partial string and return the actual file."
   [s project args]
   (let [m (for [f (remove ignore? (files-in-source-dir project args))]
@@ -105,45 +95,40 @@
                    (string/replace #".scss$" "")
                    (string/replace (re-pattern (str (source-dir project args) "/")) ""))])]
     (some (fn [f] (when (re-find (re-pattern s) (second f)) (first f))) m)))
+(def get-partial-file-from-str (memoize get-partial-file-from-str*))
 
-(defn deps-in-scss*
+(defn deps-in-scss
   "Get all direct dependencies for an .scss file"
   [file project args]
-  (remove nil? (some->> file
-                   io/reader
-                   line-seq
-                   (filter #(re-find #"@import\s+['\"].*['\"]" %))
-                   (map #(re-find #"@import\s+['\"](.*)['\"]" %))
-                   (map last)
-                   (map #(get-partial-file-from-str % project args)))))
-(def deps-in-scss (memoize deps-in-scss*))
+  (with-open [rdr (io/reader file)]
+    (->> (some->> rdr
+                  line-seq
+                  (map #(re-find #"@import\s+['\"](.*)['\"]" %))
+                  (remove nil?)
+                  (map last)
+                  (map #(get-partial-file-from-str % project args)))
+         (remove nil?)
+         doall)))
 
-
-
-(defn all-deps-for-scss*
+(defn all-deps-for-scss
   "Get all dependencies for an .scss file, dependencies of partials too."
   [file project args]
   (let [children (atom [])
         result   (distinct
                   (tree-seq (fn [child]
-                              (let [get? (not (some #{child} @children))
-                                    num  (count (deps-in-scss child project args))]
+                              (let [get? (not (some #{child} @children))]
                                 (swap! children conj child)
-                                (and (< 0 num) get?)))
+                                get?))
                             #(deps-in-scss % project args) file))]
     [(abs (first result)) (map abs (rest result))]))
-(def all-deps-for-scss (memoize all-deps-for-scss*))
 
-
-(defn source-tree*
+(defn source-tree
   [project args]
-  (map #(all-deps-for-scss %  project args) (scss-in-source project args)))
-(def source-tree (memoize source-tree*))
+  (pmap #(all-deps-for-scss %  project args) (stylesheets-in-source project args)))
 
-(defn scss-with-partial*
+(defn stylesheets-with-partial
   [file project args]
-  (print-time (map first (filter #(some #{(abs file)} (second %)) (source-tree project args)))))
-(def scss-with-partial (memoize scss-with-partial*))
+  (print-time (pmap first (filter #(some #{(abs file)} (second %)) (source-tree project args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main
@@ -173,8 +158,8 @@
   [file project args]
   (if (is-scss-partial? file)
     (doall
-     (map #(handle-conversion % project args)
-          (print-time (scss-with-partial file project args))))
+     (pmap #(handle-conversion % project args)
+           (print-time (stylesheets-with-partial file project args))))
     (convert file project args)))
 
 (defn handle-change
@@ -193,7 +178,7 @@
   (watch-dir (partial handle-change project args) (io/file dir)))
 
 (defn scss
-  "Watch a dir for changes and compile css"
+  "Compile all stylesheets in the source dir and optionally watch for changes."
   [project & args]
   (lein/debug (color :blue "args: " args))
   (if-let [dir (source-dir project args)]
