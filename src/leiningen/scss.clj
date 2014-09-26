@@ -6,6 +6,8 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
+(def ^:dynamic *boring* false)
+
 (def ansi
   {:reset   "\u001b[0m"
    :black   "\u001b[30m" :gray           "\u001b[1m\u001b[30m"
@@ -56,7 +58,9 @@
 
 (defn color
   [color & text]
-  (str (ansi color) (string/join " " text) (ansi :reset)) )
+  (if *boring*
+    (string/join " " text)
+    (str (ansi color) (string/join " " text) (ansi :reset))) )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Path helpers
@@ -215,10 +219,14 @@
 (defn scss
   "Compile all stylesheets in the source dir and/or watch for changes."
   [project & args]
-  (lein/debug (color :blue "args: " args))
-  (let [builds (get-arg-builds project args)]
-    (do
-      (when-not (some #{"auto"} args)
-        (once project args builds))
-      (when-not (some #{"once"} args)
-        (auto project args builds)))))
+  (binding [*boring* (some #{"boring"} args)]
+    (lein/debug (color :blue "args: " args))
+    (let [builds (get-arg-builds project args)]
+      (if (seq builds)
+        (do
+          (when-not (some #{"auto"} args)
+            (once project args builds))
+          (when-not (some #{"once"} args)
+            (auto project args builds)))
+        (do (lein/info (color :bright-white "  Usage: lein scss <build-key ...> [auto|once] [boring]"))
+            (System/exit 1))))))
