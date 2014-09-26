@@ -32,23 +32,26 @@
 
 (defn source-dir
   [build-map]
-  (or (:source-dir build-map) "scss/"))
+  (let [source (or (:source-dir build-map) "scss/")]
+    (if (.endsWith source "/") source (str source "/"))))
 
 (defn dest-dir
   [build-map]
-  (or (:dest-dir build-map) "css/"))
+  (let [dest (or (:dest-dir build-map) "css/")]
+    (if (.endsWith dest "/") dest (str dest "/"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helpers
 
 (defmacro print-time
-  [expr]
+  [expr & msg]
   `(let [start# (. System (nanoTime))
          ret# ~expr]
      (lein/debug
       (color :green (str "Elapsed time: "
                          (/ (double (- (. System (nanoTime)) start#)) 1000000.0)
-                         " msecs")))
+                         " msecs"))
+      (color :bright-green (string/join " " [~@msg])))
      ret#))
 
 (defn color
@@ -76,7 +79,9 @@
 
 (defn files-in-source-dir
   [build-map]
-  (filter #(.isFile %) (file-seq (io/file (source-dir build-map)))))
+  (print-time
+   (filter #(.isFile %) (file-seq (io/file (source-dir build-map))))
+   "files-in-source-dir"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Partial helpers
@@ -84,7 +89,7 @@
 (defn stylesheets-in-source
   "Get all stylesheets in source dir, not including partials"
   [build-map]
-  (let [files  (print-time (files-in-source-dir build-map))
+  (let [files  (files-in-source-dir build-map)
         result (->> files
                     (filter is-scss?)
                     (remove ignore?)
@@ -135,7 +140,8 @@
 
 (defn stylesheets-with-partial
   [build-map file]
-  (print-time (pmap first (filter #(some #{(abs file)} (second %)) (source-tree build-map)))))
+  (print-time (pmap first (filter #(some #{(abs file)} (second %)) (source-tree build-map)))
+              (str "stylesheets-with-partial: ") file))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main
@@ -159,14 +165,13 @@
     (lein/info (color :bright-blue "Converting" from "->" to))
     (lein/debug (color :blue "cmd: " (string/join " " cmd)))
     (io/make-parents to)
-    (print-time (apply eval/sh cmd))))
+    (print-time (apply eval/sh cmd) (str "convert: " file))))
 
 (defn handle-conversion
   [build-map file]
   (if (is-scss-partial? file)
     (doall
-     (pmap (partial handle-conversion build-map)
-           (print-time (stylesheets-with-partial build-map file))))
+     (pmap (partial handle-conversion build-map) (stylesheets-with-partial build-map file)))
     (convert build-map file)))
 
 (defn handle-change
@@ -176,7 +181,7 @@
                        file count action))
     (when-let [file (and (is-scss? file) file)]
       (lein/info (color :bright-yellow "Detected file change:" (.getName file)))
-      (handle-conversion build-map file))
+      (print-time (handle-conversion build-map file) (str "handle-change:" file)))
     (catch Exception e (lein/warn (with-out-str (clojure.repl/pst e 20))))))
 
 (defn watchd
