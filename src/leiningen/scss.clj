@@ -98,16 +98,15 @@
                        (string/join " | " result)))
     result))
 
-(defn get-partial-file-from-str*
+(defn partial-from-import-str*
   "Takes a partial string and return the actual file."
-  [build-map partial-str]
-  (let [m (for [f (remove ignore? (files-in-source-dir build-map))]
-            [f (-> f .getPath
-                   (string/replace #"/_" "/")
-                   (string/replace #".scss$" "")
-                   (string/replace (re-pattern (str (source-dir build-map) "/")) ""))])]
-    (some (fn [f] (when (re-find (re-pattern partial-str) (second f)) (first f))) m)))
-(def get-partial-file-from-str (memoize get-partial-file-from-str*))
+  [build-map file partial-str]
+  (let [partial-str        (string/replace partial-str #"(.+?/)?([^/]+)$" "$1_$2.scss")
+        relative-candidate (string/replace file #"/[^/]*?$" (str "/" partial-str))
+        absolute-candidate (str (source-dir build-map) partial-str)
+        file? #(let [f (-> % io/as-file)] (when (.isFile f) f))]
+    (or (file? absolute-candidate) (file? relative-candidate))))
+(def partial-from-import-str (memoize partial-from-import-str*))
 
 (defn deps-in-scss
   "Get all direct dependencies for an .scss file"
@@ -118,7 +117,7 @@
                   (map #(re-find #"@import\s+['\"](.*)['\"]" %))
                   (remove nil?)
                   (map last)
-                  (map (partial get-partial-file-from-str build-map)))
+                  (map (partial partial-from-import-str build-map file)))
          (remove nil?)
          doall)))
 
