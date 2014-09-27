@@ -46,15 +46,17 @@
 ;; Helpers
 
 (defmacro print-time
-  [expr & msg]
-  `(let [start# (. System (nanoTime))
-         ret# ~expr]
-     (lein/debug
-      (color :green (str "Elapsed time: "
-                         (/ (double (- (. System (nanoTime)) start#)) 1000000.0)
-                         " msecs"))
-      (color :bright-green (string/join " " [~@msg])))
-     ret#))
+  ([expr] `(print-time ~expr ""))
+  ([expr msg & {:keys [info]}]
+     `(let [start# (. System (nanoTime))
+            ret# ~expr
+            out-fn# (if ~info lein/info lein/debug)]
+        (out-fn#
+         (color :green (str "Elapsed time: "
+                            (/ (double (- (. System (nanoTime)) start#)) 1000000.0)
+                            " msecs"))
+         (color :bright-green (format "[%s]" ~msg)))
+        ret#)))
 
 (defn color
   [color & text]
@@ -144,7 +146,7 @@
 (defn stylesheets-with-partial
   [build-map file]
   (print-time (pmap first (filter #(some #{(abs file)} (second %)) (source-tree build-map)))
-              (str "stylesheets-with-partial: ") file))
+              (str "stylesheets-with-partial: " file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main
@@ -210,11 +212,14 @@
 (defn once
   [project args builds]
   (doseq [build builds
-          :let [build-map (get-build-map project build)]]
-    (-> (pmap (partial convert build-map)
-              (print-time (stylesheets-in-source build-map)))
-        doall
-        print-time)))
+          :let [build-map   (get-build-map project build)
+                stylesheets (print-time (stylesheets-in-source build-map))
+                exit-codes  (-> (pmap (partial convert build-map) stylesheets)
+                              doall
+                              (print-time "Total time" :info true))]]
+    (when (not-every? #(= % 0) exit-codes)
+      (lein/info (color :bright-red "There were errors compiling some of the stylesheets."))
+      (System/exit 2))))
 
 (defn scss
   "Compile all stylesheets in the source dir and/or watch for changes."
