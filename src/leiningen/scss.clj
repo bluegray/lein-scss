@@ -2,6 +2,7 @@
   "Compile a scss project to css using any sass convertion tool."
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
+            [clojure.stacktrace :as st]
             [juxt.dirwatch :refer [close-watcher watch-dir]]
             [leiningen.core.eval :as eval]
             [leiningen.core.main :as lein]
@@ -48,7 +49,7 @@
     (when-let [file (and (is-scss? file) file)]
       (lein/info (color :bright-yellow "Detected file change:" (.getName file)))
       (print-time (handle-conversion build-map file) (str "handle-change:" file)))
-    (catch Exception e (lein/warn (with-out-str (clojure.repl/pst e 20))))))
+    (catch Exception e (lein/warn (with-out-str (st/print-stack-trace e 30))))))
 
 (defn watchd
   [build-map dir]
