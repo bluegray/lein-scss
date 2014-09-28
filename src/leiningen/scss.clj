@@ -30,7 +30,8 @@
     (lein/info (color :bright-blue "Converting" from "->" to))
     (lein/debug (color :blue "cmd: " (string/join " " cmd)))
     (io/make-parents to)
-    (print-time (apply eval/sh cmd) (str "convert: " file))))
+    (binding [eval/*dir* (source-dir build-map)]
+      (print-time (apply eval/sh cmd) (str "convert: " file)))))
 
 (defn handle-conversion
   [build-map file]
