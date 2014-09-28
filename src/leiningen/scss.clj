@@ -75,9 +75,10 @@
   (doseq [build builds
           :let [build-map   (get-build-map project build)
                 stylesheets (print-time (stylesheets-in-source build-map))
-                exit-codes  (-> (pmap (partial convert build-map) stylesheets)
-                              doall
-                              (print-time "Total time" :info true))]]
+                q-fn        (if (< 10 (count stylesheets)) pmap map)
+                exit-codes  (-> (q-fn (partial convert build-map) stylesheets)
+                                doall
+                                (print-time "Total time" :info true))]]
     (when (not-every? #(= % 0) exit-codes)
       (lein/info (color :bright-red "There were errors compiling some of the stylesheets."))
       (System/exit 2))))
