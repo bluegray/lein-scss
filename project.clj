@@ -1,4 +1,4 @@
-(defproject lein-scss "0.1.7-SNAPSHOT"
+(defproject lein-scss "0.1.7"
   :description "A lein plugin to compile scss to css."
   :url "https://github.com/bluegray/lein-scss"
   :scm {:name "git"
