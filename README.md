@@ -6,7 +6,7 @@ A Leiningen plugin to compile scss to css.
 
 ## Usage
 
-Put `[lein-scss "0.1.4"]` into the `:plugins` vector of your project.clj.
+Put `[lein-scss "0.2.0"]` into the `:plugins` vector of your project.clj.
 
 Run with:
 
@@ -25,7 +25,7 @@ An example project.clj would look like this:
 (defproject myproject "0.1.0-SNAPSHOT"
   :description "My Project"
   :dependencies [[org.clojure/clojure "1.6.0"]]
-  :plugins      [[lein-scss "0.1.4"]]
+  :plugins      [[lein-scss "0.2.0"]]
 
   :scss {:builds
          {:develop    {:source-dir "scss/"
