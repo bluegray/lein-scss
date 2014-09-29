@@ -12,27 +12,33 @@
             [leiningen.scss.path :refer [abs is-scss-partial?
                                          is-scss?]]))
 
+(defn replace-urls
+  [{:keys [image-url font-url]} file]
+  (let [css (slurp file)
+        new-css (-> css
+                    (string/replace "#IMAGE-URL#" image-url)
+                    (string/replace "#FONT-URL#" font-url))]
+    (spit file new-css)))
+
 (defn convert
-  [build-map file]
-  (let [filename  (abs file)
-        source    (abs (source-dir build-map))
-        dest      (abs (dest-dir build-map))
-        dest-file (string/replace filename (re-pattern (str "^" source)) "")
-        css-file  (string/replace dest-file #"\.scss$" ".css")
-        from      filename
-        to        (str dest css-file)
-        exec      (-> build-map :executable (or "sass"))
-        cmd-args  (:args build-map)
-        cmd       (conj
-                   (cond-> [exec]
-                           (not (empty? cmd-args))
-                           (as-> args-list (apply conj args-list cmd-args)))
-                   from to)]
-    (lein/info (color :bright-blue "Converting" from "->" to))
+  [{:keys [args image-url font-url] :as build-map} file]
+  (let [from-file  (abs file)
+        source     (abs (source-dir build-map))
+        dest       (abs (dest-dir build-map))
+        css-file   (-> from-file
+                       (string/replace (re-pattern (str "^" source)) "")
+                       (string/replace #"\.scss$" ".css"))
+        to-file    (str dest css-file)
+        executable (:executable build-map "sass")
+        cmd        (into [executable] (conj args from-file to-file))]
+    (lein/info (color :bright-blue "Converting" from-file "->" to-file))
     (lein/debug (color :blue "cmd: " (string/join " " cmd)))
-    (io/make-parents to)
-    (binding [eval/*dir* (source-dir build-map)]
-      (print-time (apply eval/sh cmd) (str "convert: " file)))))
+    (io/make-parents to-file)
+    (let [exit-code (binding [eval/*dir* (source-dir build-map)]
+                      (print-time (apply eval/sh cmd) (str "convert: " file)))]
+      (when (or image-url font-url)
+        (print-time (replace-urls build-map to-file) (str "replace-urls: " to-file)))
+      exit-code)))
 
 (defn handle-conversion
   [build-map file]
