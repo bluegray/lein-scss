@@ -1,6 +1,6 @@
 # lein-scss
 
-A Leiningen plugin to compile scss to css.
+A Leiningen plugin to compile an scss project to css using CLI tools. Designed to be used with the libsass binary sassc, but should work equally well with any other CLI binary that converts scss to css.
 
 [![Clojars Project](http://clojars.org/lein-scss/latest-version.svg)](http://clojars.org/lein-scss)
 
@@ -45,7 +45,7 @@ An example project.clj would look like this:
 * `:source-dir` is the directory containing your `.scss` source files.
 * `:dest-dir` is the directory where `.css` files will be generated.
 * `:executable` is the path to your sass conversion binary.
-* `:args` is a vector of arguments to add to the command.
+* `:args` is a vector of arguments to add to the command. The input and output file arguments will be appended to this list.
 
 ## License
 
