@@ -13,11 +13,11 @@
                                          is-scss?]]))
 
 (defn replace-urls
-  [{:keys [image-url font-url]} file]
+  [{:keys [image-token font-token image-url font-url]} file]
   (let [css (slurp file)
         new-css (-> css
-                    (string/replace "#IMAGE-URL#" image-url)
-                    (string/replace "#FONT-URL#" font-url))]
+                    (string/replace (or image-token "#IMAGE-URL#") image-url)
+                    (string/replace (or font-token "#FONT-URL#") font-url))]
     (spit file new-css)))
 
 (defn convert
