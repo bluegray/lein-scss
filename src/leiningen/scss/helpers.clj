@@ -1,5 +1,7 @@
 (ns leiningen.scss.helpers
-  (:require [clojure.string :as string]
+  (:require [clj-time.core :as time]
+            [clj-time.format :as format]
+            [clojure.string :as string]
             [leiningen.core.main :as lein]))
 
 (def ^:dynamic *boring* false)
@@ -34,3 +36,7 @@
                             " msecs"))
          (color :bright-green (format "[%s]" ~msg)))
         ret#)))
+
+(defn now
+  []
+  (color :bright-cyan (format/unparse (format/formatter "[HH:mm:ss]") (time/now))))

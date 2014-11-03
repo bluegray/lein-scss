@@ -24,7 +24,7 @@
   (let [partial-str        (string/replace partial-str #"(.+?/)?([^/]+)$" "$1_$2.scss")
         relative-candidate (string/replace file #"/[^/]*?$" (str "/" partial-str))
         absolute-candidate (str (source-dir build-map) partial-str)
-        file? #(let [f (-> % io/as-file)] (when (.isFile f) f))]
+        file?              #(let [f (-> % io/as-file)] (when (.isFile f) f))]
     (or (file? absolute-candidate) (file? relative-candidate))))
 (def partial-from-import-str (memoize partial-from-import-str*))
 

@@ -1,4 +1,4 @@
-(defproject lein-scss "0.2.0"
+(defproject lein-scss "0.2.0-SNAPSHOT"
   :description "A lein plugin to compile scss to css."
   :url "https://github.com/bluegray/lein-scss"
   :scm {:name "git"
@@ -8,4 +8,5 @@
   :signing {:gpg-key "bluegray"}
   :deploy-repositories [["releases" :clojars {:creds :gpg}]]
   :eval-in-leiningen true
-  :dependencies [[juxt/dirwatch "0.2.0"]])
+  :dependencies [[juxt/dirwatch "0.2.2"]
+                 [clj-time "0.8.0"]])
