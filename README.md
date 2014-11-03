@@ -1,12 +1,14 @@
 # lein-scss
 
-A Leiningen plugin to compile an scss project to css using CLI tools. Designed to be used with the libsass binary sassc, but should work equally well with any other CLI binary that converts scss to css.
+A Leiningen plugin to compile an scss project to css using CLI tools.
+Designed to be used with the libsass binary sassc, but should work equally well with any
+other CLI binary that converts scss to css.
 
 [![Clojars Project](http://clojars.org/lein-scss/latest-version.svg)](http://clojars.org/lein-scss)
 
 ## Usage
 
-Put `[lein-scss "0.2.0"]` into the `:plugins` vector of your project.clj.
+Put `[lein-scss "0.2.1"]` into the `:plugins` vector of your project.clj.
 
 Run with:
 
@@ -36,6 +38,14 @@ An example project.clj would look like this:
                        :dest-dir   "public/css/"
                        :executable "sassc"
                        :args       ["-I" "scss/" "-t" "compressed"]}
+          :testremote {:source-dir "scss/"
+                       :dest-dir   "public/css/"
+                       :executable "sassc"
+                       :args       ["-I" "scss/" "-t" "nested"]
+                       :image-token "#IMAGE-URL#"
+                       :image-url "https://s3.amazonaws.com/test/"
+                       :font-token "#FONT-URL#"
+                       :font-url "https://s3.amazonaws.com/test/fonts/"}
           :test       {:source-dir "tests/scss/"
                        :dest-dir   "/tmp/test/css/"
                        :executable "sassc"
@@ -46,6 +56,8 @@ An example project.clj would look like this:
 * `:dest-dir` is the directory where `.css` files will be generated.
 * `:executable` is the path to your sass conversion binary.
 * `:args` is a vector of arguments to add to the command. The input and output file arguments will be appended to this list.
+
+When specified, `:image-token` and `:font-token` will be replaced by `:image-url` and `:font-url` in the generated css.
 
 ## License
 
