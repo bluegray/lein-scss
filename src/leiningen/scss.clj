@@ -46,26 +46,27 @@
       exit-code)))
 
 (defn handle-conversion
-  [build-map file]
+  [build-map args file]
   (if (is-scss-partial? file)
     (doall
-     (pmap (partial handle-conversion build-map) (stylesheets-with-partial build-map file)))
-    (convert build-map file)))
+     (pmap (partial handle-conversion build-map args) (stylesheets-with-partial build-map file)))
+    (let [exit-code (convert build-map file)]
+      (when (some #{"beep"} args) (beep (if (= exit-code 0) :success :error))))))
 
 (defn handle-change
-  [build-map {:keys [file count action]}]
+  [build-map args {:keys [file count action]}]
   (try
     (lein/debug (color :blue "Detected file change: [file count action]"
                        file count action))
     (when-let [file (and (is-scss? file) file)]
       (lein/info (color :bright-yellow "Detected file change:" (.getName file)))
-      (print-time (handle-conversion build-map file) (str "handle-change:" file)))
+      (print-time (handle-conversion build-map args file) (str "handle-change:" file)))
     (catch Exception e (lein/warn (with-out-str (st/print-stack-trace e 30))))))
 
 (defn watchd
-  [build-map dir]
+  [build-map args dir]
   (lein/info (color :bright-yellow "Watching directory" dir))
-  (watch-dir (partial handle-change build-map) (io/file dir)))
+  (watch-dir (partial handle-change build-map args) (io/file dir)))
 
 (def watchers (atom []))
 
@@ -73,7 +74,7 @@
   [project args builds]
   (doseq [build builds
           :let [build-map (get-build-map project build)]]
-    (swap! watchers conj (watchd build-map (source-dir build-map))))
+    (swap! watchers conj (watchd build-map args (source-dir build-map))))
   (.addShutdownHook
    (Runtime/getRuntime)
    (Thread. #(do (println (color :bright-magenta "\nGoodbye!"))

@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
             [clojure.string :as string]
+            [clojure.java.shell :as shell]
             [leiningen.core.main :as lein]))
 
 (def ^:dynamic *boring* false)
@@ -40,3 +41,10 @@
 (defn now
   []
   (color :bright-cyan (format/unparse (format/formatter "[HH:mm:ss]") (time/now))))
+
+(defn beep
+  [& args]
+  (apply shell/sh (concat ["beep"] (case (first args)
+                                     :success ["-f" "1660" "-l" "80"]
+                                     :error ["-f" "110" "-l" "200"]
+                                     nil))))
