@@ -8,11 +8,11 @@ other CLI binary that converts scss to css.
 
 ## Usage
 
-Put `[lein-scss "0.2.1"]` into the `:plugins` vector of your project.clj.
+Put `[lein-scss "0.2.2"]` into the `:plugins` vector of your project.clj.
 
 Run with:
 
-    lein scss <build-keys ...> [once|auto] [boring]
+    lein scss <build-keys ...> [once|auto] [boring] [beep]
 
 - The `auto` option watches the source directory for changes and automatically compiles them.
 - The `once` option will compile all stylesheets and exit.

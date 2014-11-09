@@ -108,5 +108,5 @@
             (once project args builds))
           (when-not (some #{"once"} args)
             (auto project args builds)))
-        (do (lein/info (color :bright-white "  Usage: lein scss <build-key ...> [auto|once] [boring]"))
+        (do (lein/info (color :bright-white "  Usage: lein scss <build-key ...> [auto|once] [boring] [beep]"))
             (System/exit 1))))))
