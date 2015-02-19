@@ -13,11 +13,13 @@
 
 (defn replace-urls
   [{:keys [image-token font-token image-url font-url]} file]
-  (let [css     (slurp file)
-        new-css (-> css
-                    (string/replace (or image-token "#IMAGE-URL#") image-url)
-                    (string/replace (or font-token "#FONT-URL#") font-url))]
-    (spit file new-css)))
+  (try
+    (let [css     (slurp file)
+          new-css (-> css
+                      (string/replace (or image-token "#IMAGE-URL#") image-url)
+                      (string/replace (or font-token "#FONT-URL#") font-url))]
+      (spit file new-css))
+    (catch java.io.FileNotFoundException e (lein/info (color :red e)))))
 
 (defn convert
   [{:keys [args image-url font-url] :as build-map} file]
