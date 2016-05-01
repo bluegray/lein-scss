@@ -1,7 +1,6 @@
 (ns leiningen.scss
   "Compile an scss project to css using any commandline sass convertion tool."
   (:require [robert.hooke :as hooke]
-            [clojure.pprint :as p]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.stacktrace :as st]
