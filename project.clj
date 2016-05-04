@@ -1,12 +1,12 @@
 (defproject lein-scss "0.2.4-SNAPSHOT"
-  :description "A lein plugin to compile scss to css."
-  :url "https://github.com/bluegray/lein-scss"
-  :scm {:name "git"
-        :url "https://github.com/bluegray/lein-scss"}
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :signing {:gpg-key "bluegray"}
+  :description         "A lein plugin to compile scss to css."
+  :url                 "https://github.com/bluegray/lein-scss"
+  :scm                 {:name "git"
+                        :url  "https://github.com/bluegray/lein-scss"}
+  :license             {:name "Eclipse Public License"
+                        :url  "http://www.eclipse.org/legal/epl-v10.html"}
+  :signing             {:gpg-key "D7914BDD"}
   :deploy-repositories [["releases" :clojars {:creds :gpg}]]
-  :eval-in-leiningen true
-  :dependencies [[juxt/dirwatch "0.2.2"]
-                 [clj-time "0.8.0"]])
+  :eval-in-leiningen   true
+  :dependencies        [[juxt/dirwatch "0.2.3"]
+                        [clj-time "0.11.0"]])

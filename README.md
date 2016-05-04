@@ -8,7 +8,7 @@ other CLI binary that converts scss to css.
 
 ## Usage
 
-Put `[lein-scss "0.2.2"]` into the `:plugins` vector of your project.clj.
+Put `[lein-scss "0.2.4"]` into the `:plugins` vector of your project.clj.
 
 Run with:
 
