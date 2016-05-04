@@ -18,7 +18,7 @@
                        (string/join " | " result)))
     result))
 
-(defn partial-from-import-str*
+(defn partial-from-import-str
   "Takes a partial string and return the actual file."
   [build-map file partial-str]
   (let [partial-str        (string/replace partial-str #"(.+?/)?([^/]+)$" "$1_$2.scss")
@@ -26,20 +26,21 @@
         absolute-candidate (str (source-dir build-map) partial-str)
         file?              #(let [f (-> % io/as-file)] (when (.isFile f) f))]
     (or (file? absolute-candidate) (file? relative-candidate))))
-(def partial-from-import-str (memoize partial-from-import-str*))
 
 (defn deps-in-scss
   "Get all direct dependencies for an .scss file"
   [build-map file]
-  (with-open [rdr (io/reader file)]
-    (->> (some->> rdr
-                  line-seq
-                  (map #(re-find #"@import\s+['\"](.*)['\"]" %))
-                  (remove nil?)
-                  (map last)
-                  (map (partial partial-from-import-str build-map file)))
-         (remove nil?)
-         doall)))
+  (try
+    (with-open [rdr (io/reader file)]
+      (->> (some->> rdr
+                    line-seq
+                    (map #(re-find #"@import\s+['\"](.*)['\"]" %))
+                    (remove nil?)
+                    (map last)
+                    (map (partial partial-from-import-str build-map file)))
+           (remove nil?)
+           doall))
+    (catch java.io.FileNotFoundException e (lein/info (color :red e)))))
 
 (defn all-deps-for-scss
   "Get all dependencies for an .scss file, dependencies of partials too."
