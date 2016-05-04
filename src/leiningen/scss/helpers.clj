@@ -6,6 +6,7 @@
             [leiningen.core.main :as lein]))
 
 (def ^:dynamic *boring* false)
+(def ^:dynamic *quiet* false)
 
 (def ansi
   {:reset   "\u001b[0m"

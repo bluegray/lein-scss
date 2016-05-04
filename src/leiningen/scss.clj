@@ -40,8 +40,9 @@
           stderr    (:err return)]
       (when (or image-url font-url)
         (print-time (replace-urls build-map to-file) (str "replace-urls: " to-file)))
-      (println (now) (color :blue from-file)
-               (color :bright-white "\n       -->") (color :bright-blue to-file))
+      (when-not *quiet*
+        (println (now) (color :blue from-file)
+                 (color :bright-white "\n       -->") (color :bright-blue to-file)))
       (when (-> stdout string/blank? not) (println (color :bright-white stdout)))
       (when (-> stderr string/blank? not) (println (color :bright-red stderr "\n")))
       (lein/debug (color :blue "cmd: " (string/join " " cmd)))
@@ -74,6 +75,7 @@
 
 (defn auto
   [project args builds]
+  (lein/info (now) (color :bright-white "Running auto"))
   (doseq [build builds
           :let [build-map (get-build-map project build)]]
     (swap! watchers conj (watchd build-map args (source-dir build-map))))
@@ -87,6 +89,7 @@
 
 (defn once
   [project args builds]
+  (lein/info (now) (color :bright-white "Running once"))
   (doseq [build builds
           :let [build-map   (get-build-map project build)
                 stylesheets (print-time (stylesheets-in-source build-map))
@@ -101,7 +104,8 @@
 (defn scss
   "Compile all stylesheets in the source dir and/or watch for changes."
   [project & args]
-  (binding [*boring* (some #{"boring"} args)]
+  (binding [*boring* (some #{"boring"} args)
+            *quiet*  (some #{"quiet"} args)]
     (lein/debug (color :blue "args: " args))
     (let [builds (get-arg-builds project args)]
       (if (seq builds)
@@ -110,5 +114,5 @@
             (once project args builds))
           (when-not (some #{"once"} args)
             (auto project args builds)))
-        (do (lein/info (color :bright-white "  Usage: lein scss <build-key ...> [auto|once] [boring] [beep]"))
+        (do (lein/info (color :bright-white "  Usage: lein scss <build-key ...> [auto|once] [boring] [quiet] [beep]"))
             (System/exit 1))))))

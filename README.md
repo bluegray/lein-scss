@@ -4,7 +4,7 @@ A Leiningen plugin to compile an scss project to css using CLI tools.
 Designed to be used with the libsass binary sassc, but should work equally well with any
 other CLI binary that converts scss to css.
 
-[![Clojars Project](http://clojars.org/lein-scss/latest-version.svg)](http://clojars.org/lein-scss)
+[![Clojars Project](https://img.shields.io/clojars/v/lein-scss.svg)](https://clojars.org/lein-scss)
 
 ## Usage
 
@@ -12,11 +12,12 @@ Put `[lein-scss "0.2.4"]` into the `:plugins` vector of your project.clj.
 
 Run with:
 
-    lein scss <build-keys ...> [once|auto] [boring] [beep]
+    lein scss <build-keys ...> [once|auto] [boring] [quiet] [beep]
 
 - The `auto` option watches the source directory for changes and automatically compiles them.
 - The `once` option will compile all stylesheets and exit.
 - Add the `boring` option to prevent color output for use in logs.
+- Add the `quiet` option to prevent excessive logging.
 - Running without these options will compile all stylesheets in the source directory and then wait for changes.
 - `build-keys` can be one or more keywords for builds specified in the **project.clj** configuration, see below.
 
