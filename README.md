@@ -27,9 +27,11 @@ An example project.clj would look like this:
 ```clojure
 (defproject myproject "0.1.0-SNAPSHOT"
   :description "My Project"
-  :dependencies [[org.clojure/clojure "1.6.0"]]
-  :plugins      [[lein-scss "0.2.0"]]
+  :dependencies [[org.clojure/clojure "1.8.0"]]
+  :plugins      [[lein-scss "0.2.4"]]
 
+  :hooks [leiningen.scss] ;; You can hook scss into the `compile`, `jar` and `uberjar` lein tasks
+                          ;; You also have to enable it in a build map - see below.
   :scss {:builds
          {:develop    {:source-dir "scss/"
                        :dest-dir   "public/css/"
@@ -38,7 +40,8 @@ An example project.clj would look like this:
           :production {:source-dir "scss/"
                        :dest-dir   "public/css/"
                        :executable "sassc"
-                       :args       ["-I" "scss/" "-t" "compressed"]}
+                       :args       ["-I" "scss/" "-t" "compressed"]
+                       :jar        true}
           :testremote {:source-dir "scss/"
                        :dest-dir   "public/css/"
                        :executable "sassc"
@@ -56,7 +59,8 @@ An example project.clj would look like this:
 * `:source-dir` is the directory containing your `.scss` source files.
 * `:dest-dir` is the directory where `.css` files will be generated.
 * `:executable` is the path to your sass conversion binary.
-* `:args` is a vector of arguments to add to the command. The input and output file arguments will be appended to this list.
+* `:args` is a vector of arguments to add to the executable command. The input and output file arguments will be appended to this list.
+* `:jar` set to `true` will package css in the JAR file.
 
 When specified, `:image-token` and `:font-token` will be replaced by `:image-url` and `:font-url` in the generated css.
 
