@@ -1,20 +1,19 @@
 (ns leiningen.scss
   "Compile an scss project to css using any commandline sass convertion tool."
-  (:require [robert.hooke :as hooke]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.stacktrace :as st]
             [clojure.string :as string]
             [juxt.dirwatch :refer [close-watcher watch-dir]]
-            [leiningen.core.main :as lein]
             [leiningen.compile :as lcompile]
-            [leiningen.clean :as lclean]
+            [leiningen.core.main :as lein]
             [leiningen.jar :as ljar]
             [leiningen.scss.config :refer :all]
             [leiningen.scss.helpers :refer :all]
-            [leiningen.scss.partials :refer :all]
             [leiningen.scss.jar :as jar]
-            [leiningen.scss.path :refer [abs is-scss-partial? is-scss?]]))
+            [leiningen.scss.partials :refer :all]
+            [leiningen.scss.path :refer [abs is-scss-partial? is-scss?]]
+            [robert.hooke :as hooke]))
 
 (defn replace-urls
   [{:keys [image-token font-token image-url font-url]} file]
@@ -82,7 +81,7 @@
   [project args builds]
   (lein/info (now) (color :bright-white "Running auto"))
   (doseq [build builds
-          :let [build-map (get-build-map project build)]]
+          :let  [build-map (get-build-map project build)]]
     (swap! watchers conj (watchd build-map args (source-dir build-map))))
   (.addShutdownHook
    (Runtime/getRuntime)
@@ -96,12 +95,12 @@
   [project args builds]
   (lein/info (now) (color :bright-white "Running once"))
   (doseq [build builds
-          :let [build-map   (get-build-map project build)
-                stylesheets (print-time (stylesheets-in-source build-map))
-                q-fn        (if (< 10 (count stylesheets)) pmap map)
-                exit-codes  (-> (q-fn (partial convert build-map) stylesheets)
-                                doall
-                                (print-time "Total time" :info true))]]
+          :let  [build-map   (get-build-map project build)
+                 stylesheets (print-time (stylesheets-in-source build-map))
+                 q-fn        (if (< 10 (count stylesheets)) pmap map)
+                 exit-codes  (-> (q-fn (partial convert build-map) stylesheets)
+                                 doall
+                                 (print-time "Total time" :info true))]]
     (when (not-every? #(= % 0) exit-codes)
       (lein/info (color :bright-red "There were errors compiling some of the stylesheets."))
       (when (some #{"once"} args) (System/exit 2)))))
@@ -125,8 +124,8 @@
 (defn compile-hook [task & args]
   (apply task args)
   (let [project (first args)
-        builds (get-in project [:scss :builds])
-        target (remove (fn [[k v]] (or (nil? (:jar v)) (false? (:jar v)))) builds)]
+        builds  (get-in project [:scss :builds])
+        target  (remove (fn [[k v]] (or (nil? (:jar v)) (false? (:jar v)))) builds)]
     (once (first args) #{} (keys target))))
 
 (defn jar-hook [task & [project out-file filespecs]]

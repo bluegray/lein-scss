@@ -1,8 +1,8 @@
 (ns leiningen.scss.helpers
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
-            [clojure.string :as string]
             [clojure.java.shell :as shell]
+            [clojure.string :as string]
             [leiningen.core.main :as lein]))
 
 (def ^:dynamic *boring* false)
@@ -29,15 +29,15 @@
 (defmacro print-time
   ([expr] `(print-time ~expr ""))
   ([expr msg & {:keys [info]}]
-     `(let [start# (. System (nanoTime))
-            ret# ~expr
-            out-fn# (if ~info lein/info lein/debug)]
-        (out-fn#
-         (color :green (str "Elapsed time: "
-                            (/ (double (- (. System (nanoTime)) start#)) 1000000.0)
-                            " msecs"))
-         (color :bright-green (format "[%s]" ~msg)))
-        ret#)))
+   `(let [start#  (. System (nanoTime))
+          ret#    ~expr
+          out-fn# (if ~info lein/info lein/debug)]
+      (out-fn#
+       (color :green (str "Elapsed time: "
+                          (/ (double (- (. System (nanoTime)) start#)) 1000000.0)
+                          " msecs"))
+       (color :bright-green (format "[%s]" ~msg)))
+      ret#)))
 
 (defn now
   []
@@ -47,5 +47,5 @@
   [& args]
   (apply shell/sh (concat ["beep"] (case (first args)
                                      :success ["-f" "1660" "-l" "80"]
-                                     :error ["-f" "110" "-l" "200"]
+                                     :error   ["-f" "110" "-l" "200"]
                                      nil))))

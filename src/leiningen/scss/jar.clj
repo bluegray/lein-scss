@@ -22,13 +22,12 @@
   (filter #(not (.isDirectory %)) (file-seq (io/file path))))
 
 (defn filespecs [project]
-  (let [builds (-> project :scss :builds)
+  (let [builds     (-> project :scss :builds)
         build-maps (apply dissoc builds (keep #(-> % val (contains? :jar) (if nil (key %))) builds))
-        paths (dedupe (map #(config/dest-dir (val %)) build-maps))]
+        paths      (dedupe (map #(config/dest-dir (val %)) build-maps))]
     (flatten
-      (for [path paths]
-        (for [file (get-files path)]
-          {:type :bytes
-           :path (relative-path (canonical-path path) (canonical-path file))
-           :bytes (file-bytes file)})))))
-
+     (for [path paths]
+       (for [file (get-files path)]
+         {:type  :bytes
+          :path  (relative-path (canonical-path path) (canonical-path file))
+          :bytes (file-bytes file)})))))
