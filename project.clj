@@ -9,4 +9,4 @@
   :deploy-repositories [["releases" :clojars {:creds :gpg}]]
   :eval-in-leiningen   true
   :dependencies        [[juxt/dirwatch "0.2.3"]
-                        [clj-time "0.11.0"]])
+                        [clj-time "0.12.0"]])
