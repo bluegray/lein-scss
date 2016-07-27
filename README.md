@@ -8,7 +8,7 @@ other CLI binary that converts scss to css.
 
 ## Usage
 
-Put `[lein-scss "0.2.4"]` into the `:plugins` vector of your project.clj.
+Put `[lein-scss "0.3.0"]` into the `:plugins` vector of your project.clj.
 
 Run with:
 
@@ -28,7 +28,7 @@ An example project.clj would look like this:
 (defproject myproject "0.1.0-SNAPSHOT"
   :description "My Project"
   :dependencies [[org.clojure/clojure "1.8.0"]]
-  :plugins      [[lein-scss "0.2.4"]]
+  :plugins      [[lein-scss "0.3.0"]]
 
   :hooks [leiningen.scss] ;; You can hook scss into the `compile`, `jar` and `uberjar` lein tasks
                           ;; You also have to enable it in a build map - see below.
