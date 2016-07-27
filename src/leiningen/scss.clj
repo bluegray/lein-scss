@@ -1,14 +1,19 @@
 (ns leiningen.scss
   "Compile an scss project to css using any commandline sass convertion tool."
-  (:require [clojure.java.io :as io]
+  (:require [robert.hooke :as hooke]
+            [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.stacktrace :as st]
             [clojure.string :as string]
             [juxt.dirwatch :refer [close-watcher watch-dir]]
             [leiningen.core.main :as lein]
+            [leiningen.compile :as lcompile]
+            [leiningen.clean :as lclean]
+            [leiningen.jar :as ljar]
             [leiningen.scss.config :refer :all]
             [leiningen.scss.helpers :refer :all]
             [leiningen.scss.partials :refer :all]
+            [leiningen.scss.jar :as jar]
             [leiningen.scss.path :refer [abs is-scss-partial? is-scss?]]))
 
 (defn replace-urls
@@ -116,3 +121,17 @@
             (auto project args builds)))
         (do (lein/info (color :bright-white "  Usage: lein scss <build-key ...> [auto|once] [boring] [quiet] [beep]"))
             (System/exit 1))))))
+
+(defn compile-hook [task & args]
+  (apply task args)
+  (let [project (first args)
+        builds (get-in project [:scss :builds])
+        target (remove (fn [[k v]] (or (nil? (:jar v)) (false? (:jar v)))) builds)]
+    (once (first args) #{} (keys target))))
+
+(defn jar-hook [task & [project out-file filespecs]]
+  (apply task [project out-file (concat filespecs (jar/filespecs project))]))
+
+(defn activate []
+  (hooke/add-hook #'lcompile/compile #'compile-hook)
+  (hooke/add-hook #'ljar/write-jar #'jar-hook))
