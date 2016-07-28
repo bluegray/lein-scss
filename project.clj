@@ -6,7 +6,10 @@
   :license             {:name "Eclipse Public License"
                         :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :signing             {:gpg-key "D7914BDD"}
-  :deploy-repositories [["releases" :clojars {:creds :gpg}]]
+  :deploy-repositories [["releases" :clojars {:creds :gpg}
+                         {:url      "https://clojars.org/repo"
+                          :username [:env/clojars_username :gpg]
+                          :password [:env/clojars_password :gpg]}]]
   :eval-in-leiningen   true
   :dependencies        [[juxt/dirwatch "0.2.3"]
                         [clj-time "0.12.0"]])
