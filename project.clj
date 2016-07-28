@@ -11,5 +11,6 @@
                           :username [:env/clojars_username :gpg]
                           :password [:env/clojars_password :gpg]}]]
   :eval-in-leiningen   true
-  :dependencies        [[juxt/dirwatch "0.2.3"]
+  :dependencies        [[org.clojure/clojure "1.7.0"]
+                        [juxt/dirwatch "0.2.3"]
                         [clj-time "0.12.0"]])
