@@ -4,7 +4,8 @@
             [leiningen.core.main :as lein]
             [leiningen.scss.config :refer :all]
             [leiningen.scss.helpers :refer :all]
-            [leiningen.scss.path :refer :all]))
+            [leiningen.scss.path :refer :all]
+            [clojure.set :as set]))
 
 (defn stylesheets-in-source
   "Get all stylesheets in source dir, not including partials"
@@ -15,6 +16,17 @@
                     (remove ignore?)
                     (remove is-scss-partial?))]
     (lein/debug (color :blue "Stylesheets found in" (source-dir build-map) ":"
+                       (string/join " | " result)))
+    result))
+
+(defn partials-in-source
+  "Get all partials in source dir, not including stylesheets"
+  [build-map]
+  (let [files  (files-in-source-dir build-map)
+        result (->> files
+                    (remove ignore?)
+                    (filter is-scss-partial?))]
+    (lein/debug (color :blue "Partials found in" (source-dir build-map) ":"
                        (string/join " | " result)))
     result))
 
@@ -62,3 +74,15 @@
   [build-map file]
   (print-time (pmap first (filter #(some #{(abs file)} (second %)) (source-tree build-map)))
               (str "stylesheets-with-partial: " file)))
+
+(defn unused-partials
+  [build-map]
+  (set/difference
+   (->> (partials-in-source build-map)
+        (map abs)
+        set)
+   (->> (source-tree build-map)
+        (pmap (partial second))
+        flatten
+        (map abs)
+        set)))

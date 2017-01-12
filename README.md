@@ -12,7 +12,7 @@ Put `[lein-scss "0.3.0"]` into the `:plugins` vector of your project.clj.
 
 Run with:
 
-    lein scss <build-keys ...> [once|auto] [boring] [quiet] [beep]
+    lein scss <build-keys ...> [once|auto] [boring] [quiet] [beep] [unused]
 
 - The `auto` option watches the source directory for changes and automatically compiles them.
 - The `once` option will compile all stylesheets and exit.
@@ -20,6 +20,7 @@ Run with:
 - Add the `quiet` option to prevent excessive logging.
 - Running without these options will compile all stylesheets in the source directory and then wait for changes.
 - `build-keys` can be one or more keywords for builds specified in the **project.clj** configuration, see below.
+- Use `unused` to list any partials not present in any of the stylesheets.
 
 ## Setup
 

@@ -105,6 +105,12 @@
       (lein/info (color :bright-red "There were errors compiling some of the stylesheets."))
       (when (some #{"once"} args) (System/exit 2)))))
 
+(defn unused
+  [project args builds]
+  (doseq [build builds
+          :let  [build-map (get-build-map project build)]]
+    (doseq [p (unused-partials build-map)] (lein/info p))))
+
 (defn scss
   "Compile all stylesheets in the source dir and/or watch for changes."
   [project & args]
@@ -113,12 +119,14 @@
     (lein/debug (color :blue "args: " args))
     (let [builds (get-arg-builds project args)]
       (if (seq builds)
-        (do
-          (when-not (some #{"auto"} args)
-            (once project args builds))
-          (when-not (some #{"once"} args)
-            (auto project args builds)))
-        (do (lein/info (color :bright-white "  Usage: lein scss <build-key ...> [auto|once] [boring] [quiet] [beep]"))
+        (if (some #{"unused"} args)
+          (unused project args builds)
+          (do
+            (when-not (some #{"auto"} args) (once project args builds))
+            (when-not (some #{"once"} args) (auto project args builds))))
+        (do (lein/info (color :bright-white
+                              "  Usage: lein scss <build-key ...> "
+                              "[auto|once] [boring] [quiet] [beep] [unused]"))
             (System/exit 1))))))
 
 (defn compile-hook [task & args]
